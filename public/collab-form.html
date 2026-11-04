@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Collab form registration</title></head>
+  <body>
+    <form name="collab" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="collab" />
+      <input name="name" />
+      <input name="email" type="email" />
+      <input name="phone" />
+      <select name="type">
+        <option value="Collaboration">Collaboration</option>
+        <option value="Sponsorship">Sponsorship</option>
+        <option value="Live show / Booking">Live show / Booking</option>
+        <option value="Press / Interview">Press / Interview</option>
+      </select>
+      <textarea name="message"></textarea>
+      <input name="bot-field" />
+    </form>
+  </body>
+</html>
