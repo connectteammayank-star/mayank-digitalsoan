@@ -187,3 +187,16 @@ html {
     scroll-behavior: auto;
   }
 }
+
+/* Hide Netlify injected badge / card overlay */
+.nl-wrap,
+#nl-badge,
+#nl-card,
+[class*='nl-badge'],
+[class*='nl-card'] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
