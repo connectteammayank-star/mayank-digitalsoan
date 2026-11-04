@@ -653,14 +653,14 @@ function Partner() {
             href={partner.url}
             target="_blank"
             rel="noreferrer"
-            className="block rounded-full bg-white p-1 transition-transform hover:scale-105 motion-reduce:transition-none"
+            className="block size-28 overflow-hidden rounded-full transition-transform hover:scale-105 motion-reduce:transition-none"
           >
             <img
               src={img('dgson-logo.png', 240)}
               alt="DGson logo"
               width={112}
               height={112}
-              className="size-28"
+              className="size-full rounded-full object-contain"
               loading="lazy"
             />
           </a>
