@@ -34,9 +34,12 @@ export const partner = {
   domain: 'digitalsoan.com',
 }
 
-/** Build a Netlify Image CDN URL for a file in /public/img. */
+/** Build image URL: uses Netlify Image CDN on Netlify, direct static path on Vercel / local */
 export function img(file: string, width: number) {
-  return `/.netlify/images?url=/img/${file}&w=${width}&fm=webp&q=80`
+  if (typeof window !== 'undefined' && window.location.hostname.includes('netlify.app')) {
+    return `/.netlify/images?url=/img/${file}&w=${width}&fm=webp&q=80`
+  }
+  return `/img/${file}`
 }
 
 export interface ShowcaseTrack {

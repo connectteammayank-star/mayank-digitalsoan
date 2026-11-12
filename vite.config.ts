@@ -2,11 +2,23 @@ import { defineConfig } from 'vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import netlify from '@netlify/vite-plugin-tanstack-start'
+import { nitro } from 'nitro/vite'
 
-const config = defineConfig({
-  resolve: { tsconfigPaths: true },
-  plugins: [tailwindcss(), netlify(), tanstackStart(), viteReact()],
+export default defineConfig(async () => {
+  const isNetlify = process.env.NETLIFY === 'true'
+  let deployPlugin = nitro()
+
+  if (isNetlify) {
+    try {
+      const netlifyModule = await import('@netlify/vite-plugin-tanstack-start')
+      deployPlugin = netlifyModule.default()
+    } catch {
+      // fallback to nitro
+    }
+  }
+
+  return {
+    resolve: { tsconfigPaths: true },
+    plugins: [tailwindcss(), deployPlugin, tanstackStart(), viteReact()],
+  }
 })
-
-export default config
