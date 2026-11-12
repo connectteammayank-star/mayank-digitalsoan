@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ArrowUpRight, Mail, Menu, MessageCircle, Phone } from 'lucide-react'
+import { ArrowUpRight, Mail, MapPin, Menu, MessageCircle, Phone } from 'lucide-react'
 
 import {
   Sheet,
@@ -17,7 +17,7 @@ import {
   YouTubeIcon,
 } from '@/components/brand-icons'
 import { CollabForm } from '@/components/collab-form'
-import { ScrollHeroShowcase } from '@/components/scroll-hero-showcase'
+import { ScrollMusicPlayer } from '@/components/scroll-music-player'
 import { artist, contact, img, links, partner } from '@/data/artist'
 
 export const Route = createFileRoute('/')({
@@ -79,8 +79,9 @@ function Home() {
     <div className="relative overflow-x-clip bg-background text-foreground">
       <Header />
       <main>
-        <ScrollHeroShowcase />
+        <Hero />
         <Marquee />
+        <ScrollMusicPlayer />
         <Apocalypse />
         <About />
         <Platforms />
@@ -182,6 +183,82 @@ function Header() {
   )
 }
 
+
+/* ------------------------------------------------------------------ */
+
+function Hero() {
+  return (
+    <section
+      id="top"
+      className="grain relative isolate flex min-h-[100svh] items-end overflow-hidden pt-16"
+    >
+      <img
+        src={img('apocalypse-poster.png', 1600)}
+        alt=""
+        className="absolute inset-0 -z-20 h-full w-full object-cover object-[50%_62%] opacity-60 grayscale"
+        fetchPriority="high"
+      />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/60 to-background/10" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,transparent_30%,var(--background)_95%)]" />
+
+      <div className="mx-auto w-full max-w-content px-4 pb-14 sm:px-6 sm:pb-20">
+        <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          <span className="inline-flex items-center gap-2">
+            <MapPin className="size-3.5 text-primary" />
+            {artist.city}, {artist.state}
+          </span>
+          <span className="hidden h-px w-10 bg-border sm:block" />
+          <span>{artist.genre}</span>
+        </div>
+
+        <h1 className="relative font-display uppercase leading-[0.8] tracking-tight">
+          <span className="sr-only">Mayank — Desi Hip Hop artist from Nagpur</span>
+          <span
+            aria-hidden="true"
+            className="block text-[26vw] sm:text-[22vw] lg:text-[17rem] animate-flicker"
+          >
+            Mayank
+          </span>
+          <span
+            aria-hidden="true"
+            className="animate-slash absolute left-[2%] top-[46%] block h-[0.6vw] min-h-1.5 w-[96%] -rotate-[4deg] bg-primary shadow-[0_0_30px_var(--primary)]"
+          />
+        </h1>
+
+        <div className="mt-8 grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
+          <p className="max-w-xl text-lg text-foreground/80 sm:text-xl">
+            Raw bars straight out of the Orange City.{' '}
+            <span className="font-deva text-primary">नागपुर</span> on the
+            map, one verse at a time.{' '}
+            <span className="font-tag text-foreground">NGP ∞</span>
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href={links.spotify}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-3 bg-primary px-6 py-4 font-display uppercase tracking-[0.2em] text-primary-foreground hover:bg-bone hover:text-ink transition-colors motion-reduce:transition-none"
+            >
+              <SpotifyIcon className="size-5" />
+              Stream on Spotify
+            </a>
+            <a
+              href="#music"
+              className="inline-flex items-center gap-3 border border-foreground/40 px-6 py-4 font-display uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-colors motion-reduce:transition-none"
+            >
+              <YouTubeIcon className="size-5" />
+              Watch
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute right-4 top-24 hidden rotate-6 font-tag text-2xl text-primary/80 lg:block">
+        Desi Hip Hop
+      </div>
+    </section>
+  )
+}
 
 function Marquee() {
   const items = [...MARQUEE, ...MARQUEE]

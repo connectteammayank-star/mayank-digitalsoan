@@ -43,28 +43,44 @@ export interface ShowcaseTrack {
   id: string
   number: string
   title: string
-  subtitle: string
-  tagline: string
-  genre: string
-  year: string
+  artist: string
+  producer: string
+  presentedBy: string
   duration: string
+  currentTime: string
+  progress: number
   spotifyUrl: string
   appleMusicUrl?: string
   youtubeUrl?: string
-  coverImage?: string
-  isSpotifyEmbed?: boolean
+  coverImage: string
 }
 
 export const showcaseTracks: ShowcaseTrack[] = [
   {
-    id: 'apocalypse',
+    id: 'santra-market',
     number: '01',
-    title: 'Apocalypse',
-    subtitle: 'Lead Single • Era Opener',
-    tagline: 'The city crumbles, the crown stays. Gritty 808s and Nagpur through a blood-red lens.',
-    genre: 'DHH / Grunge',
-    year: '2026',
+    title: 'SANTRA MARKET',
+    artist: 'Mayank',
+    producer: 'Prod. by @MOH.O',
+    presentedBy: 'Presented by Pataal Lok',
+    duration: '3:45',
+    currentTime: '1:24',
+    progress: 0.37,
+    spotifyUrl: links.spotify,
+    appleMusicUrl: links.appleMusic,
+    youtubeUrl: links.youtube,
+    coverImage: 'santra-market-cover.jpg',
+  },
+  {
+    id: 'apocalypse',
+    number: '02',
+    title: 'APOCALYPSE',
+    artist: 'Mayank',
+    producer: 'Prod. by Mayank Music',
+    presentedBy: 'The New Era • Nagpur',
     duration: '2:54',
+    currentTime: '0:52',
+    progress: 0.30,
     spotifyUrl: links.spotify,
     appleMusicUrl: links.appleMusic,
     youtubeUrl: links.youtube,
@@ -72,31 +88,18 @@ export const showcaseTracks: ShowcaseTrack[] = [
   },
   {
     id: 'nagpur-anthem',
-    number: '02',
-    title: 'Nagpur Anthem',
-    subtitle: '0712 Street Cypher',
-    tagline: 'Raw bars putting Orange City on the global hip hop map. No borrowed accents. Just NGP ∞.',
-    genre: 'Hardcore Hip Hop',
-    year: '2025',
+    number: '03',
+    title: 'NAGPUR ANTHEM',
+    artist: 'Mayank',
+    producer: 'Prod. by 0712 Beats',
+    presentedBy: 'NGP ∞ Desi Hip Hop',
     duration: '3:18',
+    currentTime: '1:45',
+    progress: 0.53,
     spotifyUrl: links.spotify,
     appleMusicUrl: links.appleMusic,
     youtubeUrl: links.youtube,
     coverImage: 'apocalypse-poster.png',
-  },
-  {
-    id: 'discography',
-    number: '03',
-    title: 'Full Catalogue',
-    subtitle: 'Spotify Live Player',
-    tagline: 'Stream every single, drop, and feature directly from the official artist catalogue.',
-    genre: 'Complete Discography',
-    year: '2024–2026',
-    duration: 'All Tracks',
-    spotifyUrl: links.spotify,
-    appleMusicUrl: links.appleMusic,
-    youtubeUrl: links.youtube,
-    isSpotifyEmbed: true,
   },
 ]
 
