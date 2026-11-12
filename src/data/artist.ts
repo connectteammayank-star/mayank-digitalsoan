@@ -38,3 +38,65 @@ export const partner = {
 export function img(file: string, width: number) {
   return `/.netlify/images?url=/img/${file}&w=${width}&fm=webp&q=80`
 }
+
+export interface ShowcaseTrack {
+  id: string
+  number: string
+  title: string
+  subtitle: string
+  tagline: string
+  genre: string
+  year: string
+  duration: string
+  spotifyUrl: string
+  appleMusicUrl?: string
+  youtubeUrl?: string
+  coverImage?: string
+  isSpotifyEmbed?: boolean
+}
+
+export const showcaseTracks: ShowcaseTrack[] = [
+  {
+    id: 'apocalypse',
+    number: '01',
+    title: 'Apocalypse',
+    subtitle: 'Lead Single • Era Opener',
+    tagline: 'The city crumbles, the crown stays. Gritty 808s and Nagpur through a blood-red lens.',
+    genre: 'DHH / Grunge',
+    year: '2026',
+    duration: '2:54',
+    spotifyUrl: links.spotify,
+    appleMusicUrl: links.appleMusic,
+    youtubeUrl: links.youtube,
+    coverImage: 'apocalypse-cover.jpg',
+  },
+  {
+    id: 'nagpur-anthem',
+    number: '02',
+    title: 'Nagpur Anthem',
+    subtitle: '0712 Street Cypher',
+    tagline: 'Raw bars putting Orange City on the global hip hop map. No borrowed accents. Just NGP ∞.',
+    genre: 'Hardcore Hip Hop',
+    year: '2025',
+    duration: '3:18',
+    spotifyUrl: links.spotify,
+    appleMusicUrl: links.appleMusic,
+    youtubeUrl: links.youtube,
+    coverImage: 'apocalypse-poster.png',
+  },
+  {
+    id: 'discography',
+    number: '03',
+    title: 'Full Catalogue',
+    subtitle: 'Spotify Live Player',
+    tagline: 'Stream every single, drop, and feature directly from the official artist catalogue.',
+    genre: 'Complete Discography',
+    year: '2024–2026',
+    duration: 'All Tracks',
+    spotifyUrl: links.spotify,
+    appleMusicUrl: links.appleMusic,
+    youtubeUrl: links.youtube,
+    isSpotifyEmbed: true,
+  },
+]
+
