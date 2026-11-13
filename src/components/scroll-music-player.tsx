@@ -9,18 +9,35 @@ import {
   SkipBack,
   SkipForward,
   Sparkles,
+  Volume2,
+  VolumeX,
 } from 'lucide-react'
 
 import { img, showcaseTracks, type ShowcaseTrack } from '@/data/artist'
 
+function formatSeconds(secs: number): string {
+  if (isNaN(secs) || secs < 0) return '0:00'
+  const m = Math.floor(secs / 60)
+  const s = Math.floor(secs % 60)
+  return `${m}:${s < 10 ? '0' : ''}${s}`
+}
+
 export function ScrollMusicPlayer() {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const videoRef = React.useRef<HTMLVideoElement>(null)
+  const audioRef = React.useRef<HTMLAudioElement | null>(null)
+
   const [progress, setProgress] = React.useState(0)
   const [playingTrackId, setPlayingTrackId] = React.useState<string | null>(null)
+  const [isAudioPlaying, setIsAudioPlaying] = React.useState(false)
+  const [audioTime, setAudioTime] = React.useState(0)
+  const [audioDuration, setAudioDuration] = React.useState(30)
   const [likedTracks, setLikedTracks] = React.useState<Record<string, boolean>>({})
+  const [isMuted, setIsMuted] = React.useState(false)
+  const [isShuffle, setIsShuffle] = React.useState(false)
+  const [isRepeat, setIsRepeat] = React.useState(false)
 
-  // Track user scroll and scrub video currentTime synchronously
+  // Track user scroll and scrub background video synchronously
   React.useEffect(() => {
     let ticking = false
 
@@ -55,13 +72,10 @@ export function ScrollMusicPlayer() {
       }
     }
 
-    // Initialize video ready
     const video = videoRef.current
     if (video) {
       video.pause()
-      const onLoaded = () => {
-        handleScroll()
-      }
+      const onLoaded = () => handleScroll()
       video.addEventListener('loadedmetadata', onLoaded)
       video.addEventListener('canplay', onLoaded)
     }
@@ -74,13 +88,86 @@ export function ScrollMusicPlayer() {
     }
   }, [])
 
-  // Number of tracks
   const total = showcaseTracks.length
-  // Current active index based on scroll (0, 1, or 2)
+  // Current active index based on scroll (0 through total - 1)
   const activeIndex = Math.min(
     total - 1,
     Math.max(0, Math.round(progress * (total - 1))),
   )
+
+  // Audio Playback Controls
+  const playTrack = (track: ShowcaseTrack) => {
+    if (!audioRef.current || !track.audioUrl) return
+
+    if (playingTrackId === track.id) {
+      if (isAudioPlaying) {
+        audioRef.current.pause()
+        setIsAudioPlaying(false)
+      } else {
+        audioRef.current.play().then(() => setIsAudioPlaying(true)).catch(() => {})
+      }
+      return
+    }
+
+    audioRef.current.src = track.audioUrl
+    audioRef.current.currentTime = 0
+    audioRef.current
+      .play()
+      .then(() => {
+        setPlayingTrackId(track.id)
+        setIsAudioPlaying(true)
+      })
+      .catch(() => {
+        // Autoplay policy or format error
+        setIsAudioPlaying(false)
+      })
+  }
+
+  const handleAudioTimeUpdate = () => {
+    if (!audioRef.current) return
+    setAudioTime(audioRef.current.currentTime)
+    if (audioRef.current.duration && !isNaN(audioRef.current.duration)) {
+      setAudioDuration(audioRef.current.duration)
+    }
+  }
+
+  const handleAudioEnded = () => {
+    if (isRepeat && audioRef.current) {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch(() => {})
+      return
+    }
+
+    // Auto-advance to next track
+    const currentIndex = showcaseTracks.findIndex((t) => t.id === playingTrackId)
+    if (currentIndex >= 0 && currentIndex < total - 1) {
+      const nextIndex = isShuffle
+        ? Math.floor(Math.random() * total)
+        : currentIndex + 1
+      jumpToTrack(nextIndex)
+      playTrack(showcaseTracks[nextIndex])
+    } else {
+      setIsAudioPlaying(false)
+      setPlayingTrackId(null)
+    }
+  }
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>, track: ShowcaseTrack) => {
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const percent = Math.max(0, Math.min(1, clickX / rect.width))
+
+    if (playingTrackId === track.id && audioRef.current && audioDuration > 0) {
+      audioRef.current.currentTime = percent * audioDuration
+      setAudioTime(percent * audioDuration)
+    } else {
+      playTrack(track)
+      if (audioRef.current) {
+        audioRef.current.currentTime = percent * 30
+      }
+    }
+  }
 
   // Scroll smoothly to a specific track index
   const jumpToTrack = (index: number) => {
@@ -88,23 +175,24 @@ export function ScrollMusicPlayer() {
     const clampedIndex = Math.max(0, Math.min(total - 1, index))
     const containerTop =
       containerRef.current.getBoundingClientRect().top + window.scrollY
-    const totalScroll =
-      containerRef.current.offsetHeight - window.innerHeight
-    const targetScroll =
-      containerTop + (clampedIndex / (total - 1)) * totalScroll
+    const totalScroll = containerRef.current.offsetHeight - window.innerHeight
+    const targetScroll = containerTop + (clampedIndex / (total - 1)) * totalScroll
     window.scrollTo({ top: targetScroll, behavior: 'smooth' })
-  }
-
-  const togglePlay = (id: string) => {
-    setPlayingTrackId((prev) => (prev === id ? null : id))
   }
 
   const toggleLike = (id: string) => {
     setLikedTracks((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (audioRef.current) {
+      audioRef.current.muted = !isMuted
+      setIsMuted(!isMuted)
+    }
+  }
+
   // Card slide math: cards slide continuously right-to-left
-  // Card width is 380px on desktop, slightly smaller on mobile
   const cardWidth = 380
   const gap = 20
   const step = cardWidth + gap
@@ -114,8 +202,17 @@ export function ScrollMusicPlayer() {
     <section
       ref={containerRef}
       id="music"
-      className="relative w-full h-[320vh] bg-background"
+      className="relative w-full h-[420vh] bg-background"
     >
+      {/* Hidden Audio Player Element */}
+      <audio
+        ref={audioRef}
+        preload="auto"
+        onTimeUpdate={handleAudioTimeUpdate}
+        onLoadedMetadata={handleAudioTimeUpdate}
+        onEnded={handleAudioEnded}
+      />
+
       {/* Sticky 100vh Viewport */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-end pb-8 sm:pb-12">
         {/* Background Video (Scrubbed with scroll) */}
@@ -145,9 +242,17 @@ export function ScrollMusicPlayer() {
 
         {/* Top Header Label in the section */}
         <div className="absolute top-20 left-4 sm:left-8 z-10 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          <span className="text-primary font-mono font-bold">01</span>
+          <span className="text-primary font-mono font-bold">
+            {showcaseTracks[activeIndex]?.number || '01'}
+          </span>
           <span className="h-px w-8 bg-border" />
           <span>Now Playing • Scroll to scrub</span>
+          {isAudioPlaying && (
+            <span className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/20 border border-primary/40 text-[10px] text-primary font-mono lowercase tracking-normal">
+              <span className="size-1.5 rounded-full bg-primary animate-ping" />
+              preview playing
+            </span>
+          )}
         </div>
 
         {/* Horizontal Carousel Track of Glass Music Cards */}
@@ -163,8 +268,20 @@ export function ScrollMusicPlayer() {
               const isCurrent = idx === activeIndex
               const scale = Math.max(0.86, 1 - dist * 0.14)
               const opacity = Math.max(0.4, 1 - dist * 0.55)
-              const isPlaying = playingTrackId === track.id
+              const isThisPlaying = playingTrackId === track.id && isAudioPlaying
               const isLiked = !!likedTracks[track.id]
+
+              // Calculate scrubber position
+              let displayProgress = track.progress
+              let displayCurrentTime = track.currentTime
+              let displayDuration = track.duration
+
+              if (playingTrackId === track.id) {
+                const fraction = audioDuration > 0 ? audioTime / audioDuration : 0
+                displayProgress = Math.min(1, Math.max(0, fraction))
+                displayCurrentTime = formatSeconds(audioTime)
+                displayDuration = `${formatSeconds(audioDuration)} PREVIEW`
+              }
 
               return (
                 <div
@@ -179,16 +296,30 @@ export function ScrollMusicPlayer() {
                   }}
                 >
                   {/* Glassmorphic Music Player Card */}
-                  <div className="rounded-3xl p-5 sm:p-6 backdrop-blur-3xl bg-neutral-900/40 border border-white/20 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] relative overflow-hidden group">
+                  <div
+                    className={`rounded-3xl p-5 sm:p-6 backdrop-blur-3xl bg-neutral-900/50 border transition-all duration-300 relative overflow-hidden group ${
+                      isThisPlaying
+                        ? 'border-primary/60 shadow-[0_25px_60px_-15px_rgba(230,57,70,0.35)] ring-1 ring-primary/40'
+                        : 'border-white/20 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)]'
+                    }`}
+                  >
                     {/* Top Row: Cover Art + Info + Heart & Share */}
                     <div className="flex items-start gap-4">
                       {/* Album Art Square */}
-                      <div className="relative size-20 sm:size-24 shrink-0 rounded-2xl overflow-hidden shadow-md border border-white/10">
+                      <div className="relative size-20 sm:size-24 shrink-0 rounded-2xl overflow-hidden shadow-md border border-white/10 group-hover:border-white/30 transition-all">
                         <img
                           src={img(track.coverImage, 300)}
                           alt={track.title}
                           className="size-full object-cover"
                         />
+                        {/* Audio equalizer overlay when playing */}
+                        {isThisPlaying && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1">
+                            <span className="w-1 h-4 bg-primary rounded-full animate-bounce" />
+                            <span className="w-1 h-6 bg-white rounded-full animate-bounce [animation-delay:150ms]" />
+                            <span className="w-1 h-3 bg-primary rounded-full animate-bounce [animation-delay:300ms]" />
+                          </div>
+                        )}
                       </div>
 
                       {/* Track Details */}
@@ -232,7 +363,7 @@ export function ScrollMusicPlayer() {
                           target="_blank"
                           rel="noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          aria-label="Open on Spotify"
+                          aria-label="Open track link"
                           className="p-1 hover:text-white transition-colors"
                         >
                           <Share2 className="size-4" />
@@ -240,19 +371,26 @@ export function ScrollMusicPlayer() {
                       </div>
                     </div>
 
-                    {/* Scrubber Progress Slider */}
+                    {/* Interactive Scrubber Progress Slider */}
                     <div className="mt-4">
-                      <div className="relative w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        onClick={(e) => handleSeek(e, track)}
+                        className="relative w-full h-2 group/scrub bg-white/15 hover:bg-white/25 rounded-full overflow-hidden cursor-pointer transition-all"
+                      >
                         <div
-                          className="h-full bg-white rounded-full transition-all duration-300 relative"
+                          className={`h-full rounded-full transition-all duration-150 relative ${
+                            isThisPlaying ? 'bg-primary' : 'bg-white'
+                          }`}
                           style={{
-                            width: `${(track.progress * 100).toFixed(0)}%`,
+                            width: `${(displayProgress * 100).toFixed(1)}%`,
                           }}
                         />
                       </div>
                       <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-white/60 font-mono mt-1.5">
-                        <span>{track.currentTime}</span>
-                        <span>{track.duration}</span>
+                        <span className={isThisPlaying ? 'text-primary font-bold' : ''}>
+                          {displayCurrentTime}
+                        </span>
+                        <span>{displayDuration}</span>
                       </div>
                     </div>
 
@@ -260,8 +398,13 @@ export function ScrollMusicPlayer() {
                     <div className="flex items-center justify-between mt-3 px-2">
                       <button
                         type="button"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-white/60 hover:text-white transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsShuffle(!isShuffle)
+                        }}
+                        className={`transition-colors ${
+                          isShuffle ? 'text-primary' : 'text-white/60 hover:text-white'
+                        }`}
                         aria-label="Shuffle"
                       >
                         <Shuffle className="size-4" />
@@ -272,6 +415,9 @@ export function ScrollMusicPlayer() {
                         onClick={(e) => {
                           e.stopPropagation()
                           jumpToTrack(idx - 1)
+                          if (isAudioPlaying && idx > 0) {
+                            playTrack(showcaseTracks[idx - 1])
+                          }
                         }}
                         className="text-white/90 hover:text-white transition-colors disabled:opacity-30"
                         disabled={idx === 0}
@@ -280,17 +426,21 @@ export function ScrollMusicPlayer() {
                         <SkipBack className="size-5 fill-current" />
                       </button>
 
-                      {/* Main Circular Play Button */}
+                      {/* Main Circular Play Button with Real Audio Playback */}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          togglePlay(track.id)
+                          playTrack(track)
                         }}
-                        className="size-11 sm:size-12 rounded-full bg-white/25 hover:bg-white/35 active:scale-95 transition-all flex items-center justify-center text-white shadow-lg"
-                        aria-label={isPlaying ? 'Pause' : 'Play'}
+                        className={`size-11 sm:size-12 rounded-full transition-all flex items-center justify-center text-white shadow-lg active:scale-95 ${
+                          isThisPlaying
+                            ? 'bg-primary hover:bg-primary/90 ring-4 ring-primary/30'
+                            : 'bg-white/25 hover:bg-white/35'
+                        }`}
+                        aria-label={isThisPlaying ? 'Pause audio' : 'Play audio teaser'}
                       >
-                        {isPlaying ? (
+                        {isThisPlaying ? (
                           <Pause className="size-5 fill-current" />
                         ) : (
                           <Play className="size-5 fill-current ml-0.5" />
@@ -302,6 +452,9 @@ export function ScrollMusicPlayer() {
                         onClick={(e) => {
                           e.stopPropagation()
                           jumpToTrack(idx + 1)
+                          if (isAudioPlaying && idx < total - 1) {
+                            playTrack(showcaseTracks[idx + 1])
+                          }
                         }}
                         className="text-white/90 hover:text-white transition-colors disabled:opacity-30"
                         disabled={idx === total - 1}
@@ -310,14 +463,36 @@ export function ScrollMusicPlayer() {
                         <SkipForward className="size-5 fill-current" />
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-white/60 hover:text-white transition-colors"
-                        aria-label="Repeat"
-                      >
-                        <Repeat className="size-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsRepeat(!isRepeat)
+                          }}
+                          className={`transition-colors ${
+                            isRepeat ? 'text-primary' : 'text-white/60 hover:text-white'
+                          }`}
+                          aria-label="Repeat"
+                        >
+                          <Repeat className="size-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={toggleMute}
+                          className={`transition-colors ${
+                            isMuted ? 'text-red-400' : 'text-white/60 hover:text-white'
+                          }`}
+                          aria-label={isMuted ? 'Unmute' : 'Mute'}
+                        >
+                          {isMuted ? (
+                            <VolumeX className="size-4" />
+                          ) : (
+                            <Volume2 className="size-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -333,11 +508,16 @@ export function ScrollMusicPlayer() {
               <button
                 key={i}
                 type="button"
-                onClick={() => jumpToTrack(i)}
+                onClick={() => {
+                  jumpToTrack(i)
+                  if (isAudioPlaying) {
+                    playTrack(showcaseTracks[i])
+                  }
+                }}
                 aria-label={`Go to track ${i + 1}`}
                 className={`transition-all duration-300 ${
                   activeIndex === i
-                    ? 'w-6 h-1.5 bg-white rounded-full'
+                    ? 'w-6 h-1.5 bg-primary rounded-full'
                     : 'size-1.5 bg-white/40 hover:bg-white/70 rounded-full'
                 }`}
               />
